@@ -1,0 +1,58 @@
+#include <stdint.h>
+
+#define TOMBSTONE_KEY 0x01
+
+#define SKIPLIST_ERR_NOT_FOUND -4
+
+/*
+ * skiplist_node_t
+ * represents a node within the skiplist
+ * @param flags determines whether this is a head,tail,tombstone sentinel
+ * @param key_size size of the key in this node
+ * @param value_size size of the value in this node
+ * @param value the value in bytes
+ * @param key the key in bytes
+ * @param sequence sequence number of the inserted key-value pir for MVCC
+ */
+typedef struct skiplist_node_t {
+    uint8_t flags;
+    uint32_t key_size;
+    uint32_t value_size;
+    uint8_t* value;
+    uint8_t* key;
+    uint64_t sequence;
+    struct skiplist_node_t* forward[];
+} skiplist_node_t;
+
+/*
+ * skiplist_t
+ * the actual skiplist
+ * @param current_level the current maximum active level in the list
+ * @param max_level the maximum level to cap new node promotion to higher levels
+ * @param probability a flip-coin probability to determine whether a node gets promoted to a higher
+ * level
+ * @param head the list's head
+ */
+typedef struct skiplist_t {
+    int current_level;
+    int max_level;
+    float probability;
+    skiplist_node_t* head;
+} skiplist_t;
+
+int skiplist_new(skiplist_t** list, float probability, int max_level);
+
+skiplist_node_t* skiplist_create_node(skiplist_t* list, uint8_t* key, uint32_t key_size,
+                                      uint8_t* value, uint32_t value_size, uint64_t sequence,
+                                      int level, int is_delete);
+
+int skiplist_get(skiplist_t* list, uint8_t* key, uint32_t key_size, uint8_t** value,
+                 uint32_t* value_size, uint64_t sequence);
+
+int skiplist_put(skiplist_t* list, uint8_t* key, uint32_t key_size, uint8_t* value,
+                 uint32_t value_size, uint64_t sequence);
+
+int skiplist_delete(skiplist_t* list, uint8_t* key, uint32_t value, uint64_t sequence);
+
+skiplist_node_t* skiplist_get_predecesor(skiplist_t* list, uint8_t* key, uint32_t key_size,
+                                         uint64_t sequence, skiplist_node_t** update);
