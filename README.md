@@ -6,3 +6,8 @@ The skiplist is reimplemented from William Pugh's work on skiplist reserach from
 The memtable perfroms insert, search, deletion, immutable conversion and flush operations.
 
 Key's are never deleted / over-written in-place. Instead, deletions insert a sentinel `version` value, ideally a tombstone marker.
+
+### Running tests
+```shell
+gcc -Wall -Wextra -fsanitize=address,undefined skiplist.c tests/skiplist_tests.c -o test && ./test
+```

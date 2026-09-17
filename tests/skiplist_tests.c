@@ -71,7 +71,7 @@ void test_skiplist_create_node() {
     node = skiplist_create_node(list, key, strlen((char*)key), value, strlen((char*)value),
                                 sequence, level, is_delete);
 
-    assert(node->flags & TOMBSTONE_KEY);
+    assert(node->flags & IS_TOMBSTONE);
     assert(node->value == NULL);
     assert(node->value_size == 0);
 }
@@ -83,10 +83,12 @@ void test_skiplist_put() {
     uint8_t* key = (uint8_t*)"key";
     uint8_t* value = (uint8_t*)"value";
     uint64_t sequence = 1;
+    uint8_t flags = 0;
 
     assert(skiplist_new(&list, probability, max_level) == 0);
 
-    assert(skiplist_put(list, key, strlen((char*)key), value, strlen((char*)value), sequence) == 0);
+    assert(skiplist_put(list, key, strlen((char*)key), value, strlen((char*)value), sequence,
+                        flags) == 0);
 
     uint8_t* ret_value = NULL;
     uint32_t value_size;
@@ -94,16 +96,53 @@ void test_skiplist_put() {
     assert(skiplist_get(list, key, strlen((char*)key), &ret_value, &value_size, sequence) == 0);
     assert(memcmp(value, ret_value, value_size) == 0);
 
-    value = (uint8_t*)"new_value";
     ret_value = NULL;
-    assert(skiplist_put(list, key, strlen((char*)key), value, strlen((char*)value), sequence) == 0);
+    assert(skiplist_put(list, key, strlen((char*)key), value, strlen((char*)value), sequence,
+                        flags) == 0);
 
     assert(skiplist_get(list, key, strlen((char*)key), &ret_value, &value_size, sequence) == 0);
     assert(memcmp(value, ret_value, value_size) == 0);
+
+    int total_nodes = 0;
+    skiplist_node_t* current = list->head->forward[0];
+    while (current != NULL) {
+        total_nodes++;
+        current = current->forward[0];
+    }
+
+    assert(total_nodes == 2);
+}
+
+void test_skiplist_get() {
+    skiplist_t* list = NULL;
+    int max_level = 8;
+    float probability = 0.5;
+    uint8_t* key = (uint8_t*)"key";
+    uint8_t* value = (uint8_t*)"value";
+    uint64_t sequence = 1;
+    uint8_t flags = 0;
+
+    assert(skiplist_new(&list, probability, max_level) == 0);
+
+    assert(skiplist_put(list, key, strlen((char*)key), value, strlen((char*)value), sequence,
+                        flags) == 0);
+
+    uint8_t* ret_value = NULL;
+    uint32_t value_size;
+
+    assert(skiplist_get(list, key, strlen((char*)key), &ret_value, &value_size, sequence) == 0);
+    assert(memcmp(value, ret_value, value_size) == 0);
+
+    key = (uint8_t*)"non_existent";
+    ret_value = NULL;
+
+    assert(skiplist_get(list, key, strlen((char*)key), &ret_value, &value_size, sequence) ==
+           SKIPLIST_ERR_NOT_FOUND);
 }
 
 int main(void) {
     test_skiplist_new();
     test_skiplist_create_node();
     test_skiplist_put();
+    test_skiplist_get();
 }

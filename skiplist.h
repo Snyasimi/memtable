@@ -1,6 +1,6 @@
 #include <stdint.h>
 
-#define TOMBSTONE_KEY 0x01
+#define IS_TOMBSTONE 0x01
 
 #define SKIPLIST_ERR_NOT_FOUND -4
 
@@ -44,13 +44,13 @@ int skiplist_new(skiplist_t** list, float probability, int max_level);
 
 skiplist_node_t* skiplist_create_node(skiplist_t* list, uint8_t* key, uint32_t key_size,
                                       uint8_t* value, uint32_t value_size, uint64_t sequence,
-                                      int level, int is_delete);
+                                      int level, uint8_t flags);
 
 int skiplist_get(skiplist_t* list, uint8_t* key, uint32_t key_size, uint8_t** value,
                  uint32_t* value_size, uint64_t sequence);
 
 int skiplist_put(skiplist_t* list, uint8_t* key, uint32_t key_size, uint8_t* value,
-                 uint32_t value_size, uint64_t sequence);
+                 uint32_t value_size, uint64_t sequence, uint8_t flags);
 
 int skiplist_delete(skiplist_t* list, uint8_t* key, uint32_t value, uint64_t sequence);
 
