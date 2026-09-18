@@ -32,15 +32,18 @@ typedef struct skiplist_node_t {
  * @param probability a flip-coin probability to determine whether a node gets promoted to a higher
  * level
  * @param head the list's head
+ * @param comparator_fn the custom comparator used to lexographically compare keys
  */
 typedef struct skiplist_t {
     int current_level;
     int max_level;
     float probability;
     skiplist_node_t* head;
+    int (*compare_keys)(const uint8_t*, uint32_t, const uint8_t*, uint32_t);
 } skiplist_t;
 
-int skiplist_new(skiplist_t** list, float probability, int max_level);
+int skiplist_new(skiplist_t** list, float probability, int max_level,
+                 int (*comparator_fn)(const uint8_t*, uint32_t, const uint8_t*, uint32_t));
 
 skiplist_node_t* skiplist_create_node(skiplist_t* list, uint8_t* key, uint32_t key_size,
                                       uint8_t* value, uint32_t value_size, uint64_t sequence,

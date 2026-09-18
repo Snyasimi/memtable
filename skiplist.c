@@ -14,24 +14,9 @@ static inline int generate_random_level(float probability, int max_level) {
     return level;
 }
 
-static int skiplist_compare_keys(const uint8_t* key_a, uint32_t key_a_size, const uint8_t* key_b,
-                                 uint32_t key_b_size) {
-    if (!key_a || !key_b || key_a_size == 0 || key_b_size == 0) return 0;
-
-    uint32_t min = key_a_size < key_b_size ? key_a_size : key_b_size;
-
-    int cmp = memcmp(key_a, key_b, min);
-    if (cmp != 0) return cmp;
-
-    if (key_a_size < key_b_size) return -1;
-
-    if (key_a_size > key_b_size) return 1;
-
-    return 0;
-}
-
-int skiplist_new(skiplist_t** list, float probability, int max_level) {
-    if (!list || probability <= 0.0f || probability >= 1.0f || max_level == 0) {
+int skiplist_new(skiplist_t** list, float probability, int max_level,
+                 int (*comparator)(const uint8_t*, uint32_t, const uint8_t*, uint32_t)) {
+    if (!list || probability <= 0.0f || probability >= 1.0f || max_level == 0 || !comparator) {
         return -1;
     }
 
@@ -54,6 +39,7 @@ int skiplist_new(skiplist_t** list, float probability, int max_level) {
     new_list->current_level = 1;
     new_list->probability = probability;
     new_list->max_level = max_level;
+    new_list->compare_keys = comparator;
 
     *list = new_list;
 
@@ -121,8 +107,8 @@ skiplist_node_t* skiplist_get_predecesor(skiplist_t* list, uint8_t* key, uint32_
     skiplist_node_t* current = list->head;
     for (int i = list->current_level - 1; i >= 0; i--) {
         while (current->forward[i] &&
-               skiplist_compare_keys(current->forward[i]->key, current->forward[i]->key_size, key,
-                                     key_size) < 0) {
+               list->compare_keys(current->forward[i]->key, current->forward[i]->key_size, key,
+                                  key_size) < 0) {
             current = current->forward[i];
         }
 
