@@ -16,12 +16,28 @@ static inline int generate_random_level(float probability, int max_level) {
     return level;
 }
 
+static int skiplist_compare_keys(const uint8_t* key_a, uint32_t key_a_size, const uint8_t* key_b,
+                                 uint32_t key_b_size) {
+    if (!key_a || !key_b || key_a_size == 0 || key_b_size == 0) return 0;
+
+    uint32_t min = key_a_size < key_b_size ? key_a_size : key_b_size;
+
+    int cmp = memcmp(key_a, key_b, min);
+    if (cmp != 0) return cmp;
+
+    if (key_a_size < key_b_size) return -1;
+
+    if (key_a_size > key_b_size) return 1;
+
+    return 0;
+}
+
 void test_skiplist_new() {
     skiplist_t* list = NULL;
     int max_level = 8;
     float probability = 0.5;
 
-    int rc = skiplist_new(&list, probability, max_level);
+    int rc = skiplist_new(&list, probability, max_level, skiplist_compare_keys);
     assert(rc == 0);
     assert(list->current_level = 1);
     assert(list->max_level = max_level);
@@ -38,7 +54,7 @@ void test_skiplist_new() {
     max_level = 0;
     probability = 1.0;
 
-    assert(skiplist_new(&list, probability, max_level) == -1);
+    assert(skiplist_new(&list, probability, max_level, skiplist_compare_keys) == -1);
 }
 
 void test_skiplist_create_node() {
@@ -51,7 +67,7 @@ void test_skiplist_create_node() {
     int is_delete = 0;
     int level = generate_random_level(probability, max_level);
 
-    assert(skiplist_new(&list, probability, max_level) == 0);
+    assert(skiplist_new(&list, probability, max_level, skiplist_compare_keys) == 0);
 
     skiplist_node_t* node = skiplist_create_node(list, key, strlen((char*)key), value,
                                                  strlen((char*)value), sequence, level, is_delete);
@@ -85,7 +101,7 @@ void test_skiplist_put() {
     uint64_t sequence = 1;
     uint8_t flags = 0;
 
-    assert(skiplist_new(&list, probability, max_level) == 0);
+    assert(skiplist_new(&list, probability, max_level, skiplist_compare_keys) == 0);
 
     assert(skiplist_put(list, key, strlen((char*)key), value, strlen((char*)value), sequence,
                         flags) == 0);
@@ -122,7 +138,7 @@ void test_skiplist_get() {
     uint64_t sequence = 1;
     uint8_t flags = 0;
 
-    assert(skiplist_new(&list, probability, max_level) == 0);
+    assert(skiplist_new(&list, probability, max_level, skiplist_compare_keys) == 0);
 
     assert(skiplist_put(list, key, strlen((char*)key), value, strlen((char*)value), sequence,
                         flags) == 0);
